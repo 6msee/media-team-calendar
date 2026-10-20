@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ปฏิทินทีมสื่อสารองค์กร | กองอาคารสถานที่</title>
+<meta name="description" content="ระบบวางแผนและติดตามผลการปฏิบัติงานของทีมสื่อสารองค์กร กองอาคารสถานที่ มหาวิทยาลัยพะเยา">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap"><link rel="stylesheet" href="./assets/styles.css">
+</head><body>
+<section class="auth panel" id="authGate"><div class="eyebrow">กองอาคารสถานที่ · มหาวิทยาลัยพะเยา</div><h1>ปฏิทินทีมสื่อสารองค์กร</h1><p class="foot">วางแผน ติดตามผลงาน และดูภาระงานของทีมในที่เดียว</p>
+<form id="loginForm"><label class="f">อีเมล<input id="email" type="email" autocomplete="username" required></label><label class="f">รหัสผ่าน<input id="password" type="password" autocomplete="current-password" required></label><button class="btn primary" id="loginButton">เข้าสู่ระบบ</button><p class="err" id="authError" role="alert"></p></form>
+<p class="foot">ใช้บัญชีที่ผู้ดูแลเพิ่มใน Supabase Auth และอนุมัติสิทธิ์แล้ว หากลืมรหัสผ่านโปรดติดต่อผู้ดูแล</p><button class="btn" id="btnDemo" type="button">ทดลองใช้งานด้วยข้อมูลตัวอย่าง</button><noscript>กรุณาเปิดใช้งาน JavaScript</noscript></section>
+<div id="root" hidden>
+<div class="wrap">
+  <div class="session-bar"><span id="syncText" role="status"></span><div class="actions"><button class="btn" id="btnRefresh">รีเฟรช</button><button class="btn" id="btnExport">สำรอง JSON</button><button class="btn" id="btnLogout">ออกจากระบบ</button></div></div>
+  <header class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">กองอาคารสถานที่ · มหาวิทยาลัยพะเยา</div>
+        <h1>ปฏิทินทีม<em>สื่อสารองค์กร</em></h1>
+        <div class="sub">วางแผนงานรายวันถึงรายปีงบประมาณ ดูว่าใครอยู่ไหน และวิเคราะห์สโคปงานแต่ละคนตาม % ความยากของงาน</div>
+      </div>
+      <div class="actions" id="topActions">
+        <button class="btn" id="btnMembers" type="button">สมาชิกทีม</button>
+        <button class="btn primary" id="btnAdd" type="button">+ ลงแผนงาน</button>
+      </div>
+    </div>
+    <div class="hero-stats" id="heroStats"></div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button type="button" role="tab" id="tab-cal" aria-selected="true" aria-controls="viewCal">ปฏิทินทีม</button>
+      <button type="button" role="tab" id="tab-plan" aria-selected="false" aria-controls="viewPlan">แผนปีงบประมาณ</button>
+      <button type="button" role="tab" id="tab-load" aria-selected="false" aria-controls="viewLoad">วิเคราะห์ภาระงาน</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="sampleBanner" hidden="">
+    <span id="sampleText">กำลังแสดงข้อมูลตัวอย่าง</span>
+    <button class="btn" id="btnExitSample" type="button">ออกจากตัวอย่าง</button>
+  </div>
+
+
+  <!-- Calendar -->
+  <div class="view" id="viewCal" role="tabpanel" aria-labelledby="tab-cal">
+    <section class="board" id="board">
+      <div class="panel daypick">
+        <div>
+          <div class="eyebrow" id="dayRel">วันนี้</div>
+          <div class="date" id="dayTitle">—</div>
+        </div>
+        <div class="nav">
+          <button class="btn" id="dPrev" type="button" aria-label="วันก่อนหน้า">‹ ก่อนหน้า</button>
+          <button class="btn" id="dToday" type="button">วันนี้</button>
+          <button class="btn" id="dNext" type="button" aria-label="วันถัดไป">ถัดไป ›</button>
+        </div>
+        <div class="cover" id="cover"></div>
+        <div id="coverMsg"></div>
+        <button class="btn" id="btnCopy" type="button">คัดลอกสรุปส่งกลุ่ม LINE</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>ใครอยู่ไหน</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="who" id="who"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="tl-head">
+        <div>
+          <h2>ไทม์ไลน์ทีม</h2>
+          <div class="foot" id="rangeLabel"></div>
+        </div>
+        <div class="actions">
+          <div class="seg" role="group" aria-label="ช่วงที่แสดง">
+            <button type="button" data-span="7" aria-pressed="false">1 สัปดาห์</button>
+            <button type="button" data-span="14" aria-pressed="true">2 สัปดาห์</button>
+            <button type="button" data-span="28" aria-pressed="false">4 สัปดาห์</button>
+          </div>
+          <button class="btn" id="wPrev" type="button" aria-label="สัปดาห์ก่อน">‹</button>
+          <button class="btn" id="wToday" type="button">สัปดาห์นี้</button>
+          <button class="btn" id="wNext" type="button" aria-label="สัปดาห์ถัดไป">›</button>
+        </div>
+      </div>
+      <div class="tl-scroll" id="tlScroll"></div>
+      <p class="foot" style="margin:12px 0 0">แตะช่องว่างในแถวของใครก็ได้เพื่อลงงานวันนั้น แตะแถบงานเพื่อแก้ไข · หัววันสีแดง = คนเฝ้าสำนักงานน้อยกว่าที่กำหนด</p>
+    </section>
+  </div>
+
+  <!-- Fiscal-year plan -->
+  <div class="view" id="viewPlan" role="tabpanel" aria-labelledby="tab-plan" hidden="">
+    <section class="panel" style="display:flex;flex-direction:column;gap:18px">
+      <div class="load-ctrl">
+        <div>
+          <h2>แผนงานประจำปีงบประมาณ</h2>
+          <div class="foot" id="planRangeLabel"></div>
+        </div>
+        <div class="actions" style="align-items:flex-end">
+          <label class="f" style="min-width:180px">ปีงบประมาณ
+            <select id="plan-fy"></select>
+          </label>
+          <button class="btn primary" id="btnAddPlan" type="button">+ เพิ่มแผนประจำปี</button>
+        </div>
+      </div>
+      <div class="kpis" id="planKpis"></div>
+      <div class="yr-wrap"><div class="yr" id="yrGantt"></div></div>
+      <p class="foot" style="margin:0">แถบสีตามระดับความยาก เส้นด้านล่างแถบคือ % ความคืบหน้า · ผูกงานรายวันเข้ากับแผนได้ในฟอร์ม "ลงแผนงาน" แล้วระบบจะนับวันทำงานจริงให้</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head" style="margin-bottom:10px">
+        <div>
+          <h2>ภาระงานรายเดือนทั้งปี</h2>
+          <div class="foot">คะแนนภาระ = วันทำงาน × % ความยาก · แตะช่องเพื่อเปิดปฏิทินเดือนนั้น</div>
+        </div>
+      </div>
+      <div class="heat-wrap"><table class="heat" id="heat"></table></div>
+    </section>
+  </div>
+
+  <!-- Workload -->
+  <div class="view" id="viewLoad" role="tabpanel" aria-labelledby="tab-load" hidden="">
+    <section class="panel" style="display:flex;flex-direction:column;gap:18px">
+      <div class="load-ctrl">
+        <div>
+          <h2>ภาระงานรายบุคคล</h2>
+          <div class="foot" id="loadRangeLabel"></div>
+        </div>
+        <label class="f">ช่วงที่วิเคราะห์
+          <select id="load-range"></select>
+        </label>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center">
+        <div class="lv-legend" id="lvLegend"></div>
+        <button class="btn ghost" id="btnLevels" type="button">ตั้งค่า % ความยาก</button>
+      </div>
+      <div class="people-load" id="peopleLoad"></div>
+    </section>
+
+    <div class="two">
+      <section class="panel">
+        <h2>สโคปงานที่มากที่สุดในช่วงนี้</h2>
+        <div class="foot" style="margin-bottom:10px">วัดตามความยากง่ายของงาน เรียงจากงานยากที่สุดและใช้วันทำงานมากที่สุด</div>
+        <div class="tbl-wrap"><table class="hard" id="hardTbl"></table></div>
+      </section>
+      <section class="panel">
+        <h2>แยกตามระบบ / โครงการ</h2>
+        <div class="foot" style="margin-bottom:6px">สัดส่วนคะแนนภาระของแต่ละระบบหรือโครงการ</div>
+        <div id="projList"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2 style="margin-bottom:8px">วิธีคิดคะแนน</h2>
+      <p class="method" id="methodText"></p>
+    </section>
+  </div>
+
+  <!-- AI -->
+  <section class="panel" id="aiPanel">
+    <div class="panel-head" style="margin-bottom:10px">
+      <div>
+        <h2>ช่วยสรุปงาน <span class="ai-badge">AI</span></h2>
+        <div class="foot">AI อ่านแผนงานของทีมในช่วงที่เลือก แล้วเขียนสรุปให้ ตรวจทานก่อนส่งต่อทุกครั้ง</div>
+      </div>
+    </div>
+    <div class="ai-ctrl">
+      <label class="f">ช่วงเวลา
+        <select id="ai-range">
+          <option value="week">สัปดาห์นี้</option>
+          <option value="next">สัปดาห์หน้า</option>
+          <option value="view">ช่วงที่แสดงในไทม์ไลน์</option>
+          <option value="month">เดือนนี้</option>
+          <option value="lastmonth">เดือนที่แล้ว</option>
+          <option value="fy">ปีงบประมาณที่เลือกในแท็บแผน</option>
+        </select>
+      </label>
+      <label class="f">รูปแบบ
+        <select id="ai-style">
+          <option value="overview">สรุปภาพรวมทีม + จุดที่ต้องระวัง</option>
+          <option value="report">รายงานผลการปฏิบัติงานส่งหัวหน้า</option>
+          <option value="line">ข้อความแจ้งทีมในกลุ่ม LINE</option>
+          <option value="person">วิเคราะห์สโคปงานตาม % ความยาก</option>
+          <option value="fyplan">ความคืบหน้าแผนปีงบประมาณ</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn primary" id="aiGo" type="button">สรุปงาน</button>
+        <button class="btn" id="aiStop" type="button" hidden="">หยุด</button>
+      </div>
+    </div>
+    <div class="ai-out wait" id="aiOut" hidden=""></div>
+    <div class="ai-meta" id="aiMeta" hidden="">
+      <button class="btn" id="aiCopy" type="button">คัดลอกข้อความ</button>
+      <span class="foot" id="aiNote"></span>
+    </div>
+    <p class="foot" id="aiOff" hidden="" style="margin:10px 0 0">ตั้งค่า Supabase Edge Function เพื่อเปิดใช้งาน AI</p>
+  </section>
+</div>
+
+<datalist id="projList-dl"></datalist>
+<div class="scrim" id="scrim" hidden=""></div>
+<div class="toast" id="toast" hidden=""></div>
+</div>
+<script src="./config.js"></script><script type="module" src="./assets/app.js"></script>
+</body></html>

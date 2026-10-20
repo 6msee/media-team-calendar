@@ -1,0 +1,13 @@
+# Personal source snapshot is included in the downloadable handoff only.
+private/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.DS_Store
+*.log
+supabase/.temp/
+
+# Preview infrastructure is not part of this GitHub project.
+.openai/

@@ -1,0 +1,4 @@
+# The function explicitly validates JWT via Supabase Auth.
+# Supports projects using new publishable keys as well as legacy anon keys.
+[functions.summarize]
+verify_jwt = false
